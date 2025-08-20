@@ -27,35 +27,26 @@ cargo build --release
 First, create users using the CLI mode:
 
 ```bash
-# Start CLI for user management
 cargo run -- --cli
 
-# Create an admin user
 user create admin admin123 admin
 
-# Create a regular user
 user create john password123 user
 
-# List all users (admin only)
 user list
 
-# Update user password
 user update john password newpass456
 
-# Delete a user
 user delete john
 
-# Exit CLI mode
 exit
 ```
 
 ### 2. Start Database Server
 
 ```bash
-# Start server with default database
 cargo run
 
-# Start server with custom database name
 cargo run my_database
 ```
 
@@ -63,13 +54,11 @@ cargo run my_database
 
 #### Option A: Protocol Connection
 ```bash
-# Connect using sharknado:// protocol
 cargo run -- --connect sharknado://admin:admin123@127.0.0.1:8080
 ```
 
 #### Option B: TCP Client Connection
 ```bash
-# Connect via TCP and authenticate manually
 telnet 127.0.0.1 8080
 LOGIN admin admin123
 ```
@@ -120,48 +109,36 @@ Supported operators for QUERY command:
 ### Basic Data Operations
 
 ```bash
-# After authentication, store some data
 SET users john {"name": "John Doe", "age": 30, "email": "john@example.com"}
 SET users jane {"name": "Jane Smith", "age": 25, "email": "jane@example.com"}
 SET products laptop {"name": "Gaming Laptop", "price": 1299.99, "category": "electronics"}
 
-# Retrieve data
 GET users john
-# Output: {"name": "John Doe", "age": 30, "email": "john@example.com"}
 
 GET products laptop
-# Output: {"name": "Gaming Laptop", "price": 1299.99, "category": "electronics"}
 
-# Update data
 UPDATE users john {"name": "John Doe", "age": 31, "email": "john.doe@example.com"}
 
-# Delete data
 DELETE users jane
 ```
 
 ### Advanced Queries
 
 ```bash
-# Find users older than 25
 QUERY users age > 25
 
-# Find products in electronics category
 QUERY products category = "electronics"
 
-# Find users with specific email domain
 QUERY users email contains "@example.com"
 
-# Find products under $100
 QUERY products price < 100.0
 
-# Complex queries with multiple conditions
 QUERY users age >= 18 name contains "John"
 ```
 
 ### JSON Data Examples
 
 ```bash
-# Store complex nested JSON
 SET inventory item001 {
   "name": "Wireless Headphones",
   "price": 199.99,
@@ -177,7 +154,6 @@ SET inventory item001 {
   ]
 }
 
-# Query nested fields
 QUERY inventory specs.battery contains "30"
 QUERY inventory price <= 200.0
 ```
@@ -279,16 +255,12 @@ Common error messages and solutions:
 ### Building from Source
 
 ```bash
-# Debug build
 cargo build
 
-# Release build
 cargo build --release
 
-# Run tests
 cargo test
 
-# Check code
 cargo check
 ```
 
@@ -296,16 +268,16 @@ cargo check
 
 ```
 src/
-├── main.rs              # Entry point and connection handling
-├── connection.rs        # TCP server implementation
-├── engine.rs           # Database engine core
-├── user_manager.rs     # User authentication system
-├── logs.rs            # Logging system
+├── main.rs              
+├── connection.rs        
+├── engine.rs           
+├── user_manager.rs     
+├── logs.rs            
 └── helpers/
-    ├── configs.rs      # Protocol registration
-    ├── logging.rs      # Log utilities
-    ├── messages.rs     # Response messages
-    └── mod.rs         # Module declarations
+    ├── configs.rs      
+    ├── logging.rs      
+    ├── messages.rs     
+    └── mod.rs         
 ```
 
 ## License

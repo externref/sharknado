@@ -125,8 +125,7 @@ fn default_color() -> bool {
     true
 }
 
-
-pub fn create_protocol_registery(){
+pub fn create_protocol_registery() {
     register_sharknado_protocol();
 }
 
@@ -135,7 +134,7 @@ pub fn register_sharknado_protocol() {
     {
         register_windows_protocol();
     }
-    
+
     #[cfg(not(target_os = "windows"))]
     {
         register_unix_protocol();
@@ -144,25 +143,33 @@ pub fn register_sharknado_protocol() {
 
 #[cfg(target_os = "windows")]
 fn register_windows_protocol() {
-    use std::process::Command;
     use std::env;
-    
-    // Get the current executable path
+    use std::process::Command;
+
     let exe_path = env::current_exe().unwrap_or_else(|_| std::path::PathBuf::from("sharknado.exe"));
     let exe_path_str = exe_path.to_string_lossy();
-    
+
     println!("Registering sharknado:// protocol handler...");
-    
-    // Registry commands to register the protocol
+
     let commands = vec![
-        format!(r#"reg add "HKEY_CURRENT_USER\Software\Classes\sharknado" /ve /d "Sharknado Database Protocol" /f"#),
-        format!(r#"reg add "HKEY_CURRENT_USER\Software\Classes\sharknado" /v "URL Protocol" /d "" /f"#),
-        format!(r#"reg add "HKEY_CURRENT_USER\Software\Classes\sharknado\DefaultIcon" /ve /d "{},1" /f"#, exe_path_str),
+        format!(
+            r#"reg add "HKEY_CURRENT_USER\Software\Classes\sharknado" /ve /d "Sharknado Database Protocol" /f"#
+        ),
+        format!(
+            r#"reg add "HKEY_CURRENT_USER\Software\Classes\sharknado" /v "URL Protocol" /d "" /f"#
+        ),
+        format!(
+            r#"reg add "HKEY_CURRENT_USER\Software\Classes\sharknado\DefaultIcon" /ve /d "{},1" /f"#,
+            exe_path_str
+        ),
         format!(r#"reg add "HKEY_CURRENT_USER\Software\Classes\sharknado\shell" /f"#),
         format!(r#"reg add "HKEY_CURRENT_USER\Software\Classes\sharknado\shell\open" /f"#),
-        format!(r#"reg add "HKEY_CURRENT_USER\Software\Classes\sharknado\shell\open\command" /ve /d "\"{} --connect \"%1\"\" /f"#, exe_path_str),
+        format!(
+            r#"reg add "HKEY_CURRENT_USER\Software\Classes\sharknado\shell\open\command" /ve /d "\"{} --connect \"%1\"\" /f"#,
+            exe_path_str
+        ),
     ];
-    
+
     for cmd in commands {
         match Command::new("cmd").args(&["/C", &cmd]).output() {
             Ok(output) => {
@@ -176,31 +183,30 @@ fn register_windows_protocol() {
             }
         }
     }
-    
+
     println!("Protocol registration complete. You can now use sharknado:// URLs!");
     println!("Example: sharknado://admin:admin123@127.0.0.1:8080");
 }
 
 #[cfg(not(target_os = "windows"))]
 fn register_unix_protocol() {
-    use std::fs;
     use std::env;
+    use std::fs;
     use std::path::PathBuf;
-    
+
     let exe_path = env::current_exe().unwrap_or_else(|_| PathBuf::from("sharknado"));
     let exe_path_str = exe_path.to_string_lossy();
-    
+
     println!("Registering sharknado:// protocol handler...");
-    
-    // Create .desktop file for Linux
+
     let home_dir = env::var("HOME").unwrap_or_else(|_| "/tmp".to_string());
     let desktop_dir = format!("{}/.local/share/applications", home_dir);
-    
+
     if let Err(e) = fs::create_dir_all(&desktop_dir) {
         eprintln!("Warning: Could not create applications directory: {}", e);
         return;
     }
-    
+
     let desktop_content = format!(
         r#"[Desktop Entry]
 Name=Sharknado Database
@@ -213,21 +219,20 @@ MimeType=x-scheme-handler/sharknado;
 "#,
         exe_path_str
     );
-    
+
     let desktop_file_path = format!("{}/sharknado-protocol.desktop", desktop_dir);
-    
+
     match fs::write(&desktop_file_path, desktop_content) {
         Ok(()) => {
             println!("Created desktop file: {}", desktop_file_path);
-            
-            // Try to update the desktop database
+
             if let Err(e) = std::process::Command::new("update-desktop-database")
                 .arg(&desktop_dir)
                 .output()
             {
                 eprintln!("Warning: Could not update desktop database: {}", e);
             }
-            
+
             println!("Protocol registration complete. You can now use sharknado:// URLs!");
             println!("Example: sharknado://admin:admin123@127.0.0.1:8080");
         }

@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::sync::RwLock;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -48,9 +48,14 @@ impl UserManager {
         }
     }
 
-    pub fn create_user(&self, username: String, password: String, role: UserRole) -> Result<(), String> {
+    pub fn create_user(
+        &self,
+        username: String,
+        password: String,
+        role: UserRole,
+    ) -> Result<(), String> {
         let mut users = self.users.write().unwrap();
-        
+
         if users.contains_key(&username) {
             return Err("User already exists".to_string());
         }
@@ -60,7 +65,9 @@ impl UserManager {
             username: username.clone(),
             password_hash,
             role,
-            created_at: chrono::Utc::now().format("%Y-%m-%d %H:%M:%S UTC").to_string(),
+            created_at: chrono::Utc::now()
+                .format("%Y-%m-%d %H:%M:%S UTC")
+                .to_string(),
         };
 
         users.insert(username, user);
@@ -69,7 +76,7 @@ impl UserManager {
 
     pub fn authenticate(&self, username: &str, password: &str) -> Result<(), String> {
         let users = self.users.read().unwrap();
-        
+
         if let Some(user) = users.get(username) {
             if self.verify_password(password, &user.password_hash) {
                 let mut current_user = self.current_user.write().unwrap();
@@ -117,9 +124,8 @@ impl UserManager {
         }
 
         let mut users = self.users.write().unwrap();
-        
+
         if users.remove(username).is_some() {
-            // If deleting current user, logout
             let current_user = self.current_user.read().unwrap();
             if let Some(current) = current_user.as_ref() {
                 if current == username {
@@ -134,17 +140,19 @@ impl UserManager {
     }
 
     pub fn update_user(&self, username: &str, field: &str, value: &str) -> Result<(), String> {
-        if !self.is_admin() && self.get_current_user().map(|u| u.username) != Some(username.to_string()) {
+        if !self.is_admin()
+            && self.get_current_user().map(|u| u.username) != Some(username.to_string())
+        {
             return Err("Insufficient permissions".to_string());
         }
 
         let mut users = self.users.write().unwrap();
-        
+
         if let Some(user) = users.get_mut(username) {
             match field {
                 "password" => {
                     user.password_hash = self.hash_password(value);
-                },
+                }
                 "role" => {
                     if !self.is_admin() {
                         return Err("Only admins can change roles".to_string());
@@ -154,7 +162,7 @@ impl UserManager {
                     } else {
                         return Err("Invalid role".to_string());
                     }
-                },
+                }
                 _ => return Err("Invalid field".to_string()),
             }
             Ok(())
@@ -169,10 +177,9 @@ impl UserManager {
     }
 
     fn hash_password(&self, password: &str) -> String {
-        // Simple hash for demo purposes - in production, use bcrypt or similar
         use std::collections::hash_map::DefaultHasher;
         use std::hash::{Hash, Hasher};
-        
+
         let mut hasher = DefaultHasher::new();
         password.hash(&mut hasher);
         format!("{:x}", hasher.finish())
@@ -182,7 +189,6 @@ impl UserManager {
         self.hash_password(password) == hash
     }
 
-    // Initialize with default admin user if no users exist
     pub fn ensure_default_admin(&self) {
         let users = self.users.read().unwrap();
         if users.is_empty() {
@@ -191,10 +197,14 @@ impl UserManager {
         }
     }
 
-    // TCP Connection authentication methods
-    pub fn authenticate_connection(&self, connection_id: &str, username: &str, password: &str) -> Result<(), String> {
+    pub fn authenticate_connection(
+        &self,
+        connection_id: &str,
+        username: &str,
+        password: &str,
+    ) -> Result<(), String> {
         let users = self.users.read().unwrap();
-        
+
         if let Some(user) = users.get(username) {
             if self.verify_password(password, &user.password_hash) {
                 let mut connections = self.authenticated_connections.write().unwrap();

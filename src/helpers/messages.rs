@@ -48,12 +48,10 @@ impl Messages {
           QUERY users name=\"John\"\n\
           QUERY products price>100\n";
 
-    // Success messages
     pub const SUCCESS_OK: &'static str = "OK\n";
     pub const SUCCESS_NULL: &'static str = "NULL\n";
     pub const SUCCESS_GOODBYE: &'static str = "Goodbye!\n";
 
-    // Error messages - Command format errors
     pub const ERROR_EMPTY_COMMAND: &'static str = "ERROR: Empty command\n";
     pub const ERROR_SET_ARGS: &'static str =
         "ERROR: SET requires 3 arguments: SET <table> <key> <value>\n";
@@ -65,44 +63,44 @@ impl Messages {
     pub const ERROR_QUERY_ARGS: &'static str =
         "ERROR: QUERY requires at least 2 arguments: QUERY <table> <conditions...>\n";
 
-    // Error messages - JSON errors
     pub const ERROR_INVALID_JSON: &'static str = "ERROR: Invalid JSON value\n";
 
-    // Authentication messages
-    pub const ERROR_LOGIN_ARGS: &'static str = "ERROR: LOGIN requires 2 arguments: LOGIN <username> <password>\n";
-    pub const AUTH_REQUIRED: &'static str = "Authentication required. Please use: LOGIN <username> <password>\n";
+    pub const ERROR_LOGIN_ARGS: &'static str =
+        "ERROR: LOGIN requires 2 arguments: LOGIN <username> <password>\n";
+    pub const AUTH_REQUIRED: &'static str =
+        "Authentication required. Please use: LOGIN <username> <password>\n";
     pub const LOGIN_SUCCESS: &'static str = "Login successful\n";
     pub const LOGOUT_SUCCESS: &'static str = "Logged out\n";
 
-    // Error messages - Query errors
     pub const ERROR_INVALID_CONTAINS: &'static str =
         "Invalid contains condition format. Use: field contains \"value\"";
 
-    // Query response messages
     pub const QUERY_NO_RESULTS: &'static str = "No results found\n";
 
-    // User management messages
     pub const USER_CREATED: &'static str = "User created successfully\n";
     pub const USER_DELETED: &'static str = "User deleted successfully\n";
     pub const USER_UPDATED: &'static str = "User updated successfully\n";
-    pub const USER_LOGIN_SUCCESS: &'static str = "Login successful\n";
-    pub const USER_LOGOUT_SUCCESS: &'static str = "Logged out successfully\n";
-    
-    // User management errors
+
     pub const ERROR_USER_EXISTS: &'static str = "ERROR: User already exists\n";
     pub const ERROR_USER_NOT_FOUND: &'static str = "ERROR: User not found\n";
     pub const ERROR_INVALID_CREDENTIALS: &'static str = "ERROR: Invalid username or password\n";
-    pub const ERROR_NOT_AUTHENTICATED: &'static str = "ERROR: Not authenticated. Please login first\n";
+    pub const ERROR_NOT_AUTHENTICATED: &'static str =
+        "ERROR: Not authenticated. Please login first\n";
     pub const ERROR_INSUFFICIENT_PERMISSIONS: &'static str = "ERROR: Insufficient permissions\n";
-    pub const ERROR_USER_CREATE_ARGS: &'static str = "ERROR: USER CREATE requires 3 arguments: USER CREATE <username> <password> <role>\n";
-    pub const ERROR_USER_DELETE_ARGS: &'static str = "ERROR: USER DELETE requires 1 argument: USER DELETE <username>\n";
-    pub const ERROR_USER_UPDATE_ARGS: &'static str = "ERROR: USER UPDATE requires 3 arguments: USER UPDATE <username> <field> <value>\n";
-    pub const ERROR_USER_LOGIN_ARGS: &'static str = "ERROR: USER LOGIN requires 2 arguments: USER LOGIN <username> <password>\n";
-    pub const ERROR_INVALID_USER_COMMAND: &'static str = "ERROR: Invalid USER command. Use: CREATE, LIST, DELETE, UPDATE, LOGIN, LOGOUT, WHOAMI\n";
+    pub const ERROR_USER_CREATE_ARGS: &'static str =
+        "ERROR: USER CREATE requires 3 arguments: USER CREATE <username> <password> <role>\n";
+    pub const ERROR_USER_DELETE_ARGS: &'static str =
+        "ERROR: USER DELETE requires 1 argument: USER DELETE <username>\n";
+    pub const ERROR_USER_UPDATE_ARGS: &'static str =
+        "ERROR: USER UPDATE requires 3 arguments: USER UPDATE <username> <field> <value>\n";
+    pub const ERROR_USER_LOGIN_ARGS: &'static str =
+        "ERROR: USER LOGIN requires 2 arguments: USER LOGIN <username> <password>\n";
+    pub const ERROR_INVALID_USER_COMMAND: &'static str =
+        "ERROR: Invalid USER command. Use: CREATE, LIST, DELETE, UPDATE, LOGIN, LOGOUT, WHOAMI\n";
     pub const ERROR_INVALID_ROLE: &'static str = "ERROR: Invalid role. Valid roles: admin, user\n";
-    pub const ERROR_INVALID_UPDATE_FIELD: &'static str = "ERROR: Invalid field. Valid fields: password, role\n";
+    pub const ERROR_INVALID_UPDATE_FIELD: &'static str =
+        "ERROR: Invalid field. Valid fields: password, role\n";
 
-    // Helper methods for dynamic messages
     pub fn unknown_command(cmd: &str) -> String {
         format!(
             "ERROR: Unknown command '{}'. Type HELP for available commands.\n",

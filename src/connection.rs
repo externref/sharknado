@@ -97,13 +97,21 @@ impl TCPServer {
                 if parts.len() != 3 {
                     return Messages::ERROR_LOGIN_ARGS.to_string();
                 }
-                
+
                 let username = parts[1];
                 let password = parts[2];
-                
-                match self.user_manager.authenticate_connection(connection_id, username, password) {
+
+                match self
+                    .user_manager
+                    .authenticate_connection(connection_id, username, password)
+                {
                     Ok(()) => {
-                        self.logger.info(&format!("User {} logged in from {}", username, connection_id)).await;
+                        self.logger
+                            .info(&format!(
+                                "User {} logged in from {}",
+                                username, connection_id
+                            ))
+                            .await;
                         Messages::LOGIN_SUCCESS.to_string()
                     }
                     Err(_) => Messages::ERROR_INVALID_CREDENTIALS.to_string(),
@@ -111,7 +119,9 @@ impl TCPServer {
             }
             "logout" => {
                 self.user_manager.logout_connection(connection_id);
-                self.logger.info(&format!("User logged out from {}", connection_id)).await;
+                self.logger
+                    .info(&format!("User logged out from {}", connection_id))
+                    .await;
                 Messages::LOGOUT_SUCCESS.to_string()
             }
             "whoami" => {
@@ -125,7 +135,7 @@ impl TCPServer {
                 if !self.user_manager.is_connection_authenticated(connection_id) {
                     return Messages::ERROR_NOT_AUTHENTICATED.to_string();
                 }
-                
+
                 if parts.len() != 4 {
                     return Messages::ERROR_SET_ARGS.to_string();
                 }
@@ -151,7 +161,7 @@ impl TCPServer {
                 if !self.user_manager.is_connection_authenticated(connection_id) {
                     return Messages::ERROR_NOT_AUTHENTICATED.to_string();
                 }
-                
+
                 if parts.len() != 3 {
                     return Messages::ERROR_GET_ARGS.to_string();
                 }
@@ -177,7 +187,7 @@ impl TCPServer {
                 if !self.user_manager.is_connection_authenticated(connection_id) {
                     return Messages::ERROR_NOT_AUTHENTICATED.to_string();
                 }
-                
+
                 if parts.len() != 4 {
                     return Messages::ERROR_UPDATE_ARGS.to_string();
                 }
@@ -203,7 +213,7 @@ impl TCPServer {
                 if !self.user_manager.is_connection_authenticated(connection_id) {
                     return Messages::ERROR_NOT_AUTHENTICATED.to_string();
                 }
-                
+
                 if parts.len() != 3 {
                     return Messages::ERROR_DELETE_ARGS.to_string();
                 }
@@ -220,14 +230,13 @@ impl TCPServer {
                 if !self.user_manager.is_connection_authenticated(connection_id) {
                     return Messages::ERROR_NOT_AUTHENTICATED.to_string();
                 }
-                
+
                 if parts.len() < 3 {
                     return Messages::ERROR_QUERY_ARGS.to_string();
                 }
                 let table = parts[1].to_string();
                 let conditions_str = parts[2..].join(" ");
 
-                // Simple condition parsing for single conditions
                 let conditions = match self.parse_single_condition(&conditions_str) {
                     Ok(cond) => vec![cond],
                     Err(err) => return Messages::query_error(&err),
@@ -258,56 +267,6 @@ impl TCPServer {
             "help" => Messages::TCP_HELP_TEXT.to_string(),
             _ => Messages::unknown_command(&cmd),
         }
-    }
-
-    fn parse_query_conditions_from_string(
-        &self,
-        conditions_str: &str,
-    ) -> Result<Vec<crate::engine::QueryCondition>, String> {
-        let mut conditions = Vec::new();
-        let mut current_condition = String::new();
-        let mut in_quotes = false;
-        let mut chars = conditions_str.chars().peekable();
-
-        while let Some(ch) = chars.next() {
-            match ch {
-                '"' => {
-                    in_quotes = !in_quotes;
-                    current_condition.push(ch);
-                }
-                ' ' if !in_quotes => {
-                    if !current_condition.trim().is_empty() {
-                        let condition = self.parse_single_condition(&current_condition.trim())?;
-                        conditions.push(condition);
-                        current_condition.clear();
-                    }
-                }
-                _ => {
-                    current_condition.push(ch);
-                }
-            }
-        }
-
-        if !current_condition.trim().is_empty() {
-            let condition = self.parse_single_condition(&current_condition.trim())?;
-            conditions.push(condition);
-        }
-
-        Ok(conditions)
-    }
-
-    fn parse_query_conditions(
-        &self,
-        condition_parts: &[&str],
-    ) -> Result<Vec<crate::engine::QueryCondition>, String> {
-        let mut conditions = Vec::new();
-
-        for part in condition_parts {
-            let condition = self.parse_single_condition(part)?;
-            conditions.push(condition);
-        }
-
-        Ok(conditions)
     }
 
     fn parse_single_condition(
@@ -376,13 +335,12 @@ impl TCPServer {
         let peer_addr = stream
             .peer_addr()
             .unwrap_or_else(|_| "unknown".parse().unwrap());
-        let connection_id = format!("{}", peer_addr); // Use peer address as connection ID
-        
+        let connection_id = format!("{}", peer_addr);
+
         self.logger
             .info(&format!("New connection from: {}", peer_addr))
             .await;
 
-        // Send welcome message requiring authentication
         let welcome_msg = Messages::AUTH_REQUIRED;
         if let Err(e) = stream.write_all(welcome_msg.as_bytes()).await {
             self.logger

@@ -9,20 +9,19 @@ mod user_manager;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = std::env::args().collect();
-        // Check for special flags
     let cli_mode = args.contains(&"--cli".to_string());
     let register_protocol = args.contains(&"--register-protocol".to_string());
-    let connect_uri = args.iter().position(|arg| arg == "--connect")
+    let connect_uri = args
+        .iter()
+        .position(|arg| arg == "--connect")
         .and_then(|pos| args.get(pos + 1))
         .cloned();
 
-    // Handle protocol registration
     if register_protocol {
         helpers::configs::create_protocol_registery();
         return Ok(());
     }
 
-    // Handle protocol connection
     if let Some(uri) = connect_uri {
         connect_via_protocol(&uri).await?;
         return Ok(());
@@ -47,9 +46,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("  --register-protocol      Register sharknado:// protocol handler");
             println!("  --help, -h               Show this help message");
             println!("\nArguments:");
-            println!("  database-name            Name of the database to use (default: sharknado_default)");
+            println!(
+                "  database-name            Name of the database to use (default: sharknado_default)"
+            );
             println!("\nModes:");
-            println!("  Default Mode             Start TCP server - users connect with credentials");
+            println!(
+                "  Default Mode             Start TCP server - users connect with credentials"
+            );
             println!("  CLI Mode (--cli)         User management only - create/manage users");
             println!("\nExamples:");
             println!(
@@ -94,12 +97,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         ))
         .await;
 
-    // Create shared user manager
     let user_manager = std::sync::Arc::new(user_manager::UserManager::new());
     user_manager.ensure_default_admin();
 
     if cli_mode {
-        // Start CLI mode
         start_cli_mode(database_name, user_manager, core_logger).await?;
         return Ok(());
     }
@@ -140,7 +141,10 @@ async fn start_cli_mode(
     use helpers::messages::Messages;
     use std::io::{self, Write};
 
-    println!("Sharknado CLI User Management Mode - Database: {}", database_name);
+    println!(
+        "Sharknado CLI User Management Mode - Database: {}",
+        database_name
+    );
     println!("This mode is only for user management. Use TCP mode for database operations.");
     println!("Type 'help' for available commands, 'exit' to quit");
 
@@ -187,9 +191,7 @@ async fn parse_cli_command(
     let cmd = parts[0].to_lowercase();
 
     match cmd.as_str() {
-        "user" => {
-            parse_user_command(&parts[1..], user_manager).await
-        }
+        "user" => parse_user_command(&parts[1..], user_manager).await,
         "help" => {
             format!(
                 "Sharknado CLI User Management Commands:\n\
@@ -221,24 +223,26 @@ async fn parse_user_command(
     user_manager: &std::sync::Arc<user_manager::UserManager>,
 ) -> String {
     use helpers::messages::Messages;
-    
+
     if parts.is_empty() {
         return Messages::ERROR_INVALID_USER_COMMAND.to_string();
     }
 
     let user_cmd = parts[0].to_lowercase();
-    
+
     match user_cmd.as_str() {
         "create" => {
-            // parts should be ["create", "username", "password", "role"] = 4 parts
             if parts.len() != 4 {
-                return format!("ERROR: USER CREATE requires 3 arguments: USER CREATE <username> <password> <role>\nReceived {} arguments\n", parts.len() - 1);
+                return format!(
+                    "ERROR: USER CREATE requires 3 arguments: USER CREATE <username> <password> <role>\nReceived {} arguments\n",
+                    parts.len() - 1
+                );
             }
-            
+
             let username = parts[1].to_string();
             let password = parts[2].to_string();
             let role_str = parts[3];
-            
+
             if let Some(role) = user_manager::UserRole::from_str(role_str) {
                 match user_manager.create_user(username, password, role) {
                     Ok(()) => Messages::USER_CREATED.to_string(),
@@ -252,7 +256,7 @@ async fn parse_user_command(
             if !user_manager.is_admin() {
                 return Messages::ERROR_INSUFFICIENT_PERMISSIONS.to_string();
             }
-            
+
             let users = user_manager.list_users();
             if users.is_empty() {
                 "No users found\n".to_string()
@@ -272,9 +276,9 @@ async fn parse_user_command(
             if parts.len() != 2 {
                 return Messages::ERROR_USER_DELETE_ARGS.to_string();
             }
-            
+
             let username = parts[1];
-            
+
             match user_manager.delete_user(username) {
                 Ok(()) => Messages::USER_DELETED.to_string(),
                 Err(err) => {
@@ -290,21 +294,21 @@ async fn parse_user_command(
             if parts.len() != 4 {
                 return Messages::ERROR_USER_UPDATE_ARGS.to_string();
             }
-            
+
             let username = parts[1];
             let field = parts[2];
             let value = parts[3];
-            
+
             if field != "password" && field != "role" {
                 return Messages::ERROR_INVALID_UPDATE_FIELD.to_string();
             }
-            
+
             if field == "role" {
                 if user_manager::UserRole::from_str(value).is_none() {
                     return Messages::ERROR_INVALID_ROLE.to_string();
                 }
             }
-            
+
             match user_manager.update_user(username, field, value) {
                 Ok(()) => Messages::USER_UPDATED.to_string(),
                 Err(err) => {
@@ -346,8 +350,8 @@ impl SharknadorUri {
         if !uri.starts_with("sharknado://") {
             return Err("URI must start with 'sharknado://'".to_string());
         }
-        
-        let uri_body = &uri[12..]; 
+
+        let uri_body = &uri[12..];
         let parts: Vec<&str> = uri_body.split('@').collect();
         if parts.len() != 2 {
             return Err("URI must contain username:password@host:port".to_string());
@@ -356,7 +360,7 @@ impl SharknadorUri {
         if auth_parts.len() != 2 {
             return Err("Authentication must be in format username:password".to_string());
         }
-        
+
         let username = auth_parts[0].to_string();
         let password = auth_parts[1].to_string();
         let host_port_db = parts[1];
@@ -366,17 +370,17 @@ impl SharknadorUri {
         } else {
             (host_port_db, None)
         };
-        
-        // Parse host:port
+
         let host_port_parts: Vec<&str> = host_port.split(':').collect();
         if host_port_parts.len() != 2 {
             return Err("Host must be in format host:port".to_string());
         }
-        
+
         let host = host_port_parts[0].to_string();
-        let port = host_port_parts[1].parse::<u16>()
+        let port = host_port_parts[1]
+            .parse::<u16>()
             .map_err(|_| "Port must be a valid number".to_string())?;
-        
+
         Ok(SharknadorUri {
             username,
             password,
@@ -389,37 +393,33 @@ impl SharknadorUri {
 
 async fn connect_via_protocol(uri: &str) -> Result<(), Box<dyn std::error::Error>> {
     let parsed_uri = SharknadorUri::parse(uri)?;
-    
+
     println!("Connecting to Sharknado database...");
     println!("Host: {}:{}", parsed_uri.host, parsed_uri.port);
     println!("User: {}", parsed_uri.username);
     if let Some(db) = &parsed_uri.database {
         println!("Database: {}", db);
     }
-    
-    // Create TCP connection
+
     use tokio::net::TcpStream;
-    
+
     let addr = format!("{}:{}", parsed_uri.host, parsed_uri.port);
     let mut stream = TcpStream::connect(&addr).await?;
-    
+
     println!("Connected! Authenticating...");
-    
-    // Read welcome message
+
     let mut buffer = [0; 1024];
     let n = stream.read(&mut buffer).await?;
     let welcome = String::from_utf8_lossy(&buffer[..n]);
     print!("{}", welcome);
-    
-    // Send login command
+
     let login_cmd = format!("LOGIN {} {}\n", parsed_uri.username, parsed_uri.password);
     stream.write_all(login_cmd.as_bytes()).await?;
-    
-    // Read login response
+
     let n = stream.read(&mut buffer).await?;
     let login_response = String::from_utf8_lossy(&buffer[..n]);
     print!("{}", login_response);
-    
+
     if login_response.contains("successful") {
         println!("Authentication successful! Starting interactive session...");
         start_interactive_client_session(stream).await?;
@@ -427,44 +427,46 @@ async fn connect_via_protocol(uri: &str) -> Result<(), Box<dyn std::error::Error
         println!("Authentication failed!");
         return Err("Authentication failed".into());
     }
-    
+
     Ok(())
 }
 
-async fn start_interactive_client_session(mut stream: tokio::net::TcpStream) -> Result<(), Box<dyn std::error::Error>> {
+async fn start_interactive_client_session(
+    mut stream: tokio::net::TcpStream,
+) -> Result<(), Box<dyn std::error::Error>> {
     use std::io::{self, Write};
-    
+
     println!("Interactive mode started. Type 'exit' to disconnect.");
-    
+
     let mut buffer = [0; 1024];
-    
+
     loop {
         print!("sharknado> ");
         io::stdout().flush()?;
-        
+
         let mut input = String::new();
         io::stdin().read_line(&mut input)?;
-        
+
         let command = input.trim();
-        
+
         if command.is_empty() {
             continue;
         }
-        
+
         if command.to_lowercase() == "exit" {
             stream.write_all(b"exit\n").await?;
             break;
         }
-        
-        // Send command
-        stream.write_all(format!("{}\n", command).as_bytes()).await?;
-        
-        // Read response
+
+        stream
+            .write_all(format!("{}\n", command).as_bytes())
+            .await?;
+
         let n = stream.read(&mut buffer).await?;
         let response = String::from_utf8_lossy(&buffer[..n]);
         print!("{}", response);
     }
-    
+
     println!("Disconnected from Sharknado database.");
     Ok(())
 }
